@@ -9,7 +9,6 @@ import asyncio
 from config.base_config import logger
 
 TEST_URL = "https://jsonplaceholder.typicode.com"
-BASE_URL = "https://pro-api.coinmarketcap.com"
 
 DEFAULT_HEADER = {
     'Accepts': 'application/json',
