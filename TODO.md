@@ -14,3 +14,7 @@
 --
 # 2022-07-07
 ## test transaction scope has not been working
+
+--
+# 2022-07-08
+## Need to combine sessions of client(routes) and service.... how?

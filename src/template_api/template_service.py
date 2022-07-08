@@ -15,7 +15,7 @@ from config.base_config import logger
 def createPerson(createReq: template_model.CreateReq, db: Session) -> int:
     model = Person(**createReq.dict())
     db.add(model)
-    db.commit() 
+    #db.commit() 
     return model.id 
 
 def getPeople(db: Session) -> list[Person]:
@@ -30,7 +30,7 @@ def getPeople(db: Session) -> list[Person]:
 def editPerson(id: int, editPerson: template_model.EditReq, db: Session) -> int:
     # person = db.query(Person).filter(Person.id == id).one_or_none()
     db.query(Person).filter(Person.id == id).update(editPerson.dict())
-    db.commit() 
+    #db.commit() 
     return 1
 
 def getPerson(id: int, db: Session) -> Person:
@@ -39,7 +39,7 @@ def getPerson(id: int, db: Session) -> Person:
 def removePerson(id: int, db: Session) -> int:
     person = db.query(Person).filter(Person.id == id).one_or_none()
     db.delete(person)
-    db.commit()
+    #db.commit()
     return 1
     
 
@@ -58,7 +58,7 @@ def removePerson(id: int, db: Session) -> int:
 #             for quote in res[symbol]:
 #                 db.add(Quote.convertFromDict(quote))
                 
-#     db.commit() 
+#     #db.commit() 
 
 # async def addQuoteList(db: Session):
 #     currencys = [KRW, USD]
@@ -70,7 +70,7 @@ def removePerson(id: int, db: Session) -> int:
 #         for quote in res:
 #             db.add(Quote.convertFromDict(quote))
                 
-#     db.commit() 
+#     #db.commit() 
 
 # async def getQuotes(symbols:str, currencys:str):
 #     [symbols, currencys] = spaceRemover(symbols, currencys)

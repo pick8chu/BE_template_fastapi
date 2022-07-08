@@ -21,31 +21,40 @@ client = TestClient(app)
 creating database session
 https://fastapi.tiangolo.com/advanced/testing-database/
 '''
-# engine = create_engine(SQLALCHEMY_DATABASE_URI)
-# TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+engine = create_engine(SQLALCHEMY_DATABASE_URI)
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
 
-# def override_get_db():
-#     try:
-#         db = TestingSessionLocal()
-#         yield db
-#     finally:
-#         db.close()
+def override_get_db():
+    try:
+        db = TestingSessionLocal()
+        yield db
+    finally:
+        print("here")
+        db.rollback()
+        db.close()
 
-# app.dependency_overrides[get_db] = override_get_db
+# this is for routes parameter
+app.dependency_overrides[get_db] = override_get_db
 
 '''
 till here
 '''
 
-# correct way
+# this is for service parameter
 # TODO: rollback is not working properly
 @pytest.fixture
 def db_session():
     connection = create_engine(SQLALCHEMY_DATABASE_URI)
-    transaction = connection.begin().transaction
-    yield sessionmaker(autocommit=False, autoflush=False, bind=connection)
-    transaction.rollback()
+    sessionTest = sessionmaker(autocommit=False, autoflush=True, bind=connection)
+    db = sessionTest()
+    try:
+        yield db
+    finally:
+        print("here2")
+        db.rollback()
+        db.close()
 
+# TODO: need to combine sessions of client and service.... how?
 def test_create_person(db_session):
     # given
     createReq = getCreateReq()
@@ -55,7 +64,9 @@ def test_create_person(db_session):
 
     # then 
     createdId = res.json()
-    resModel = template_service.getPerson(createdId, db_session())
+    resModel = template_service.getPerson(createdId, db_session)
+    logger.info(resModel)
+
     assert res.status_code == 200
     assert createReq["name"] == resModel.name
 
