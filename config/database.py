@@ -4,6 +4,7 @@ from sqlalchemy.orm import sessionmaker # type: ignore
 import config.constants as CONSTANTS
 
 SQLALCHEMY_DATABASE_URI = f"postgresql://{CONSTANTS.DB_USER_NAME}:{CONSTANTS.DB_PASSWORD}@localhost:5432/{CONSTANTS.DB_DATABASE}"
+SQLALCHEMY_TEST_DATABASE_URI = f"postgresql://{CONSTANTS.DB_USER_NAME}:{CONSTANTS.DB_PASSWORD}@localhost:5432/test_db"
 
 '''
 TEST TABLE CREATION SQL IS BELOW
@@ -21,18 +22,18 @@ CREATE TABLE public.test_mt (
 );
 
 '''
-engine = create_engine(SQLALCHEMY_DATABASE_URI, pool_pre_ping=True)
-SessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
+engine = create_engine(SQLALCHEMY_DATABASE_URI, pool_pre_ping=True, echo=True)
+SessionLocal = sessionmaker(autocommit=True, autoflush=False, bind=engine)
+# autocommit = True to connect several methods in one session.
+# if those several methods commit their changes on their scope, when something has failed
+# some of them were committed and the others were not.
 
 Base = declarative_base()
 
-# commit when it's good,
-# rollback when it's failed
 def get_db():
-    db = SessionLocal()
     try:
+        db = SessionLocal()
         yield db
-        db.commit()
     except:
         db.rollback()
         raise

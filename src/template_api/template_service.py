@@ -15,7 +15,7 @@ from config.base_config import logger
 def createPerson(createReq: template_model.CreateReq, db: Session) -> int:
     model = Person(**createReq.dict())
     db.add(model)
-    #db.commit() 
+    db.flush()
     return model.id 
 
 def getPeople(db: Session) -> list[Person]:
@@ -30,17 +30,25 @@ def getPeople(db: Session) -> list[Person]:
 def editPerson(id: int, editPerson: template_model.EditReq, db: Session) -> int:
     # person = db.query(Person).filter(Person.id == id).one_or_none()
     db.query(Person).filter(Person.id == id).update(editPerson.dict())
-    #db.commit() 
-    return 1
+    db.flush()
+    return id
 
 def getPerson(id: int, db: Session) -> Person:
-    return db.query(Person).filter(Person.id == id).one_or_none()
+    res = db.query(Person).filter(Person.id == id).one_or_none()
+    if not res:
+        raise Exception('data not existing')
+    return res
     
 def removePerson(id: int, db: Session) -> int:
     person = db.query(Person).filter(Person.id == id).one_or_none()
     db.delete(person)
-    #db.commit()
-    return 1
+    db.flush()
+    return id
+
+def removeAll(db: Session) -> int:
+    person = db.query(Person).all()
+    db.delete(person)
+    db.flush()
     
 
 

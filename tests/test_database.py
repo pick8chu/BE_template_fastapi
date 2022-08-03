@@ -1,8 +1,10 @@
+# from click import confirm
+from re import template
 import pytest
 from config.base_config import logger
 from fastapi.testclient import TestClient
 
-from config.database import SQLALCHEMY_DATABASE_URI, get_db
+from config.database import SQLALCHEMY_TEST_DATABASE_URI, get_db
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -15,47 +17,30 @@ from main import app
 
 BASE_URI = "/people"
 
-client = TestClient(app)
-
 '''
 creating database session
 https://fastapi.tiangolo.com/advanced/testing-database/
+
+Due to 2 different sessions, without commiting the data
+it is not possible to check the data that is inserted.
 '''
-engine = create_engine(SQLALCHEMY_DATABASE_URI)
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=True, bind=engine)
+engine = create_engine(SQLALCHEMY_TEST_DATABASE_URI, pool_pre_ping=True, echo=True)
+TestingSessionLocal = sessionmaker(autocommit=True, autoflush=False, bind=engine)
+Base.metadata.create_all(bind=engine)
 
 def override_get_db():
     try:
         db = TestingSessionLocal()
         yield db
     finally:
-        print("here")
-        db.rollback()
         db.close()
 
-# this is for routes parameter
 app.dependency_overrides[get_db] = override_get_db
 
-'''
-till here
-'''
+client = TestClient(app)
 
-# this is for service parameter
-# TODO: rollback is not working properly
-@pytest.fixture
-def db_session():
-    connection = create_engine(SQLALCHEMY_DATABASE_URI)
-    sessionTest = sessionmaker(autocommit=False, autoflush=True, bind=connection)
-    db = sessionTest()
-    try:
-        yield db
-    finally:
-        print("here2")
-        db.rollback()
-        db.close()
-
-# TODO: need to combine sessions of client and service.... how?
-def test_create_person(db_session):
+# TODO: Need to make the sqeuence if you have one.
+def test_create_and_get_person():
     # given
     createReq = getCreateReq()
     
@@ -64,11 +49,13 @@ def test_create_person(db_session):
 
     # then 
     createdId = res.json()
-    resModel = template_service.getPerson(createdId, db_session)
-    logger.info(resModel)
+    logger.info(f'createdId : {createdId}')
+    confirmRes = client.get(f'{BASE_URI}/{createdId}')
+    confirmModel = confirmRes.json()
 
     assert res.status_code == 200
-    assert createReq["name"] == resModel.name
+    assert confirmRes.status_code == 200
+    assert createReq["name"] == confirmModel["name"]
 
 # def test_get_person():
 #     # given
